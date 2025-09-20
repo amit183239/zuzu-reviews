@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: zuzu_reviews
+      POSTGRES_USER: zuzu
+      POSTGRES_PASSWORD: zuzu
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zuzu -d zuzu_reviews"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/zuzu_reviews
+      SPRING_DATASOURCE_USERNAME: zuzu
+      SPRING_DATASOURCE_PASSWORD: zuzu
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+      AWS_REGION: ap-southeast-1
+    ports:
+      - "8080:8080"

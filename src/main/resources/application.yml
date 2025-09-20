@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/zuzu_reviews
+    username: zuzu
+    password: zuzu
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.lob.non_contextual_creation: true
+    open-in-view: false
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+logging:
+  level:
+    root: INFO
+    com.zuzu.reviews: DEBUG
+    org.hibernate.SQL: INFO
+
+app:
+  ingestion:
+    s3-bucket: zuzu-reviews-amit
+    s3-prefix: reviews-daily/
+    provider-default: Agoda
+    poll-cron: "0 0/15 * * * *"   # every 15 minutes
+    max-concurrent-files: 4
+    skip-days-back: 7
+
+server:
+  port: 8080
+
+aws:
+  credentials:
+    accessKey: AKIATYHWWRCORJUH3Z53
+    secretKey: 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
+  region:
+    static: ap-southeast-2
+cloud:
+  aws:
+    region:
+      static: ap-southeast-2

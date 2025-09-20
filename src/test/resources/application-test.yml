@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:14:///testdb
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  main:
+    allow-bean-definition-overriding: true
+
+spring.task.scheduling.enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.zuzu.reviews: INFO
+
+app:
+  ingestion:
+    s3-bucket: zuzu-reviews-amit
+    s3-prefix: reviews-daily/
+    max-concurrent-files: 2
+    poll-cron: "*/30 * * * * *"
