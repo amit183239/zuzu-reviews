@@ -141,49 +141,49 @@ flowchart TD
   class RS,CTRL,SVC,JPA,ING,PARSE,Cache comp;
 ```
 
-## Sequence Diagram
+## Sequence Diagram Ingestion flow
 ```mermaid
 sequenceDiagram
-autonumber
-participant C as "Client"
-participant G as "API Gateway / Ingress"
-participant R as "Review Service"
-participant S as "Service Layer"
-participant J as "JPA / Hibernate"
-participant D as "RDBMS"
+  autonumber
+  participant CRON as "Scheduler (@Scheduled)"
+  participant ING as "Ingestion Service"
+  participant S3 as "AWS S3"
+  participant PARSER as "JSONL Parser"
+  participant SVC as "Service Layer"
+  participant JPA as "JPA / Repositories"
+  participant DB as "RDBMS"
+  participant PF as "ProcessedFiles Repo"
+  participant MET as "Metrics / Logs"
+
+  CRON->>ING: Trigger poll()
+  ING->>S3: ListObjects(prefix="reviews-daily/")
+  S3-->>ING: Keys [file1.jsonl, file2.jsonl]
+  ING->>PF: Load processed keys
+  PF-->>ING: Set{...}
+  ING->>ING: Filter unprocessed keys
+
+  alt No new files
+    ING-->>MET: record metric: no_op
+    ING-->>CRON: return
+  else Files pending
+    loop For each key
+      ING->>S3: GetObject(key)
+      S3-->>ING: Stream
+      ING->>PARSER: Process line-by-line
+      PARSER-->>SVC: Valid records (batch)
+      SVC->>JPA: saveAll(records)
+      JPA->>DB: INSERT/UPDATE (batch)
+      DB-->>JPA: OK
+      JPA-->>SVC: OK
+      PF->>DB: INSERT processed_file(key, etag, ts)
+      DB-->>PF: OK
+      SVC-->>MET: increment counters
+    end
+  end
+
+  ING-->>CRON: Done
 
 
-Note over C,G: Request path for GET /reviews/{id}
-C->>G: GET /reviews/42
-G->>R: Forward request (auth, rate limit)
-R->>S: Map to service method
-
-
-opt Redis cache enabled
-S->>S: Check cache(key=review:42)
-alt Cache hit
-S-->>R: Review DTO (from cache)
-else Cache miss
-S->>J: findById(42)
-J->>D: SELECT * FROM reviews WHERE id=42
-D-->>J: Row
-J-->>S: Entity
-S->>S: Put into cache (TTL)
-S-->>R: DTO/Response
-end
-end
-
-
-R-->>G: 200 OK (JSON)
-G-->>C: 200 OK (JSON)
-
-
-%% Error branch (e.g., not found)
-alt Review not found
-S-->>R: throws NotFound
-R-->>G: 404 Not Found (problem+json)
-G-->>C: 404 Not Found
-end
 ```
 
 ## Notes

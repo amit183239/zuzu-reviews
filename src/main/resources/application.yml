@@ -35,8 +35,8 @@ server:
 
 aws:
   credentials:
-    accessKey: AKIATYHWWRCORJUH3Z53
-    secretKey: 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
+    accessKey:
+    secretKey:
   region:
     static: ap-southeast-2
 cloud:
